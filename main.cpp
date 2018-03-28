@@ -21,15 +21,16 @@ static clock_t sTime; //시작 시간
 #define MAP_STARTY 2
 
 //이동 회수 및 소요시간 출력 위치: 필요하다면 출력 위치를 조정할 수 있음 
-#define SCORE_STARTX 45
-#define SCORE_STARTY 21
+#define SCORE_STARTX 22
+#define SCORE_STARTY 8
 
+//S
 using namespace std;
 
 
 void gotoXY(int x, int y); //콘솔 화면에서 커서를 특정 위치로 이동
 void init(int (*m)[DIM]); //초기화 함수; 필요시에 매개변수를 추가함
-void gameDraw(int (*m)[DIM]); // 게임 맵과 반복회수, 시간 출력함수; MAP_STARTX, MAP_STARTY 상수를 참조해서 항상 고정 위치(gotoXY함수 사용에 출력필요시에 매개변수를 추가함
+void gameDraw(int (*m)[DIM],int moved); // 게임 맵과 반복회수, 시간 출력함수; MAP_STARTX, MAP_STARTY 상수를 참조해서 항상 고정 위치(gotoXY함수 사용에 출력필요시에 매개변수를 추가함
 //                화면 출력 예시
 //                Fifteen Puzzle
 //                  1  2  9  3
@@ -42,7 +43,7 @@ void gameDraw(int (*m)[DIM]); // 게임 맵과 반복회수, 시간 출력함수; MAP_STARTX, 
 
 void puzzleMove(); //퍼즐 이동 함수; 필요시에 매개변수 추가함
 void shuffle(int num);//퍼즐 맵 초기화; 50회 무작위 이동, 필요시에 인자 추가 할 수 있음
-int getAction();//모든 퍼즐이 제 위치에 있거나 ESC키가 눌러졌으면 정수 0을 반환
+int getAction(int (*m)[DIM]);//모든 퍼즐이 제 위치에 있거나 ESC키가 눌러졌으면 정수 0을 반환
                    // 방향키를 눌렀을 때는 해당 키값을 반환(LEFT, RIGHT, DOWN, UP)
                    //필요시에 매개변수 인자를 추가할 수 있음
 
@@ -60,14 +61,15 @@ int main(void)
 
    init(map);
    shuffle(50);
-   gameDraw(map);
-   action = getAction();
-   // while(action)
-   //{
-   //   puzzleMove();
-   //   gameDraw(map); 
-   //  action = getAction();
-   //}
+   gameDraw(map,1);
+   map[0][1] = 3;
+   action = getAction(map);
+   while(action)
+   {
+      puzzleMove();
+      gameDraw(map,0);
+	  action = getAction(map);
+   }
 
    return 0;
 }
@@ -93,29 +95,61 @@ void init(int (*m)[DIM]) //초기화 함수; 필요시에 매개변수를 추가함
 	y = 0;
 	moveNum = 0;
 }
-void gameDraw(int (*m)[DIM])
+void gameDraw(int (*m)[DIM],int moved)
 {
+	if(moved == 1){ //이동이 일어났을때만 출력
 	gotoXY(MAP_STARTX,MAP_STARTY);
 	cout << "fifteen Puzzle";
 	int x = MAP_STARTX;
 	int y = MAP_STARTY + 1;
-	gotoXY(x,y);
-	for(int i = 0 ; i < DIM ; i++){
-		for(int j = 0 ; j < DIM; j++){
-			cout << setw(3) << m[i][j] << " ";
+		gotoXY(x,y);
+		for(int i = 0 ; i < DIM ; i++){
+			for(int j = 0 ; j < DIM; j++){
+				if(m[i][j] == 0) cout << "  * " ;
+				else cout << setw(3) << m[i][j] << " ";
+			}
+			gotoXY(x,++y);
 		}
-		gotoXY(x,++y);
+		//이동 회수, 소요시간 출력
+		gotoXY(SCORE_STARTX,SCORE_STARTY);
+		cout << "이동 회수: " << moveNum << "회";
+		gotoXY(SCORE_STARTX,SCORE_STARTY + 1);
+		cout << "소요 시간: ";
 	}
-	//이동 회수, 소요시간 출력
-	y = y + 1;
-	gotoXY(x,y);
-	cout << "이동 회수: " << moveNum << "회";
+	gotoXY(SCORE_STARTX + 11,SCORE_STARTY + 1);
+	cout << sTime << "초";
 	
 }
 void puzzleMove() //퍼즐 이동 함수; 필요시에 매개변수 추가함
 {}
 void shuffle(int num)//퍼즐 맵 초기화; 50회 무작위 이동, 필요시에 인자 추가 할 수 있음
 {}
-int getAction(){return 1;}//모든 퍼즐이 제 위치에 있거나 ESC키가 눌러졌으면 정수 0을 반환
-                   // 방향키를 눌렀을 때는 해당 키값을 반환(LEFT, RIGHT, DOWN, UP)
-                   //필요시에 매개변수 인자를 추가할 수 있음
+int getAction(int (*m)[DIM]){
+	//맞는지 체크
+	int flag = 1;
+	int cnt = 0;
+	for(int i = 0 ; i < DIM ; i++){
+		for(int j = 0 ; j < DIM ; j++){
+			if(m[i][j] != cnt++){
+				flag = 0;
+				break;
+			}
+		}
+	}
+	if(flag == 1) return 0; // 다 맞았을때 return 0
+	int cmd;
+	int ret_val = 0;
+	
+	cmd = getDirectKey();
+	//printf("\ncmd = %d\n",cmd);
+	switch(cmd){
+	case -1: ret_val = 0; break;
+	case LEFT: ret_val = LEFT; break;
+	case RIGHT: ret_val = RIGHT; break;
+	case DOWN: ret_val = DOWN; break;
+	case UP: ret_val = UP; break;
+	default : ret_val = -1; break; //아무입력도 없을시 cmd = 0
+	}
+	//printf("return val = %d\n",ret_val);
+	return ret_val;
+}
