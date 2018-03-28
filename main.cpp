@@ -2,7 +2,7 @@
 #include <windows.h> //GetStdHandle(), Sleep(), SetConsoleCursorPosition() 함수 사용
 #include <conio.h> //getch()와 kbhit() 함수 사용
 #include <ctime> //clock() 함수 사용
-
+#include <iomanip> //setw() 함수 사용
 
 #define ESC 27 //게임 종료
 #define LEFT 75 //왼쪽 화살표 키 ASCII값
@@ -28,8 +28,8 @@ using namespace std;
 
 
 void gotoXY(int x, int y); //콘솔 화면에서 커서를 특정 위치로 이동
-void init(); //초기화 함수; 필요시에 매개변수를 추가함
-void gameDraw(); // 게임 맵과 반복회수, 시간 출력함수; MAP_STARTX, MAP_STARTY 상수를 참조해서 항상 고정 위치(gotoXY함수 사용에 출력필요시에 매개변수를 추가함
+void init(int (*m)[DIM]); //초기화 함수; 필요시에 매개변수를 추가함
+void gameDraw(int (*m)[DIM]); // 게임 맵과 반복회수, 시간 출력함수; MAP_STARTX, MAP_STARTY 상수를 참조해서 항상 고정 위치(gotoXY함수 사용에 출력필요시에 매개변수를 추가함
 //                화면 출력 예시
 //                Fifteen Puzzle
 //                  1  2  9  3
@@ -58,16 +58,16 @@ int main(void)
    int map[DIM][DIM];
    int action = 1;
 
-   init();
+   init(map);
    shuffle(50);
-   gameDraw();
+   gameDraw(map);
    action = getAction();
-    while(action)
-   {
-      puzzleMove();
-     gameDraw(); 
-     action = getAction();
-   }
+   // while(action)
+   //{
+   //   puzzleMove();
+   //   gameDraw(map); 
+   //  action = getAction();
+   //}
 
    return 0;
 }
@@ -81,10 +81,37 @@ void gotoXY(int x, int y)
 
 // 그외 함수들을 정의함
 
-void init() //초기화 함수; 필요시에 매개변수를 추가함
-{}
-void gameDraw()
-{}
+void init(int (*m)[DIM]) //초기화 함수; 필요시에 매개변수를 추가함
+{
+	int val = 0;
+	for(int i = 0 ; i< DIM ; i++){
+		for(int j = 0 ; j < DIM ; j++){
+			m[i][j] = val++;
+		}
+	}
+	x = 0;
+	y = 0;
+	moveNum = 0;
+}
+void gameDraw(int (*m)[DIM])
+{
+	gotoXY(MAP_STARTX,MAP_STARTY);
+	cout << "fifteen Puzzle";
+	int x = MAP_STARTX;
+	int y = MAP_STARTY + 1;
+	gotoXY(x,y);
+	for(int i = 0 ; i < DIM ; i++){
+		for(int j = 0 ; j < DIM; j++){
+			cout << setw(3) << m[i][j] << " ";
+		}
+		gotoXY(x,++y);
+	}
+	//이동 회수, 소요시간 출력
+	y = y + 1;
+	gotoXY(x,y);
+	cout << "이동 회수: " << moveNum << "회";
+	
+}
 void puzzleMove() //퍼즐 이동 함수; 필요시에 매개변수 추가함
 {}
 void shuffle(int num)//퍼즐 맵 초기화; 50회 무작위 이동, 필요시에 인자 추가 할 수 있음
